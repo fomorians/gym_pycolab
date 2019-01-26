@@ -1,4 +1,4 @@
-"""An example implementation of the classic games."""
+"""An example implementation of the pycolab games."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -242,6 +242,7 @@ if __name__ == "__main__":
             'fluvial_natation',
             'warehouse_manager'], 
         required=True)
+    parser.add_argument('--benchmark', action='store_true')
     args = parser.parse_args()
 
     if args.game == 'chain_walk':
@@ -267,10 +268,33 @@ if __name__ == "__main__":
     elif args.game == 'fluvial_natation':
         env = FluvialNatationEnv(max_steps=250)
 
-    state = env.reset()
-    done = False
-    env.render()
-    while not done:
-        state, reward, done, info = env.step(env.action_space.sample())
+    if args.benchmark:
+        import time
+        num_eps = 500
+        total_eps_time = 0.
+        total_fps = 0.
+        for _ in range(num_eps):
+            start = time.time()
+            state = env.reset()
+            done = False
+            num_frames = 0
+            while not done:
+                _, _, done, _ = env.step(env.action_space.sample())
+                num_frames += 1
+            eps_time = (time.time() - start)
+            total_eps_time += eps_time
+            total_fps += (num_frames / eps_time)
+        average_eps_time = total_eps_time / num_eps
+        average_fps = total_fps / num_eps
+        print('total eps: {}ms, avg. eps: {}ms, avg. fps: {}fps'.format(
+            total_eps_time * 1e3, 
+            average_eps_time * 1e3, 
+            average_fps))
+    else:
+        state = env.reset()
+        done = False
         env.render()
-    env.close()
+        while not done:
+            state, reward, done, info = env.step(env.action_space.sample())
+            env.render()
+        env.close()

@@ -70,6 +70,13 @@ class PyColabEnv(gym.Env):
 
     def get_states(self, observations):
         """Transform the pycolab `rendering.Observations` to a state."""
+        # TODO(wenkesj): there might be a better way, 
+        # this current function decreases fps by ~2x (compared to below).
+        # 
+        # This is the optimal scenario, so maybe there is a way to map values 
+        #   ahead of time?
+        # >>> return observations.board
+
         board = np.zeros_like(observations.board).astype(np.uint32)
         for value, layer in observations.layers.items():
             board_mask = np.array(layer, np.uint32) * self._value_mapping[value]

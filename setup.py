@@ -11,6 +11,4 @@ setup(
     description='Gym interface for custom pycolab games.',
     url='https://github.com/fomorians/gym_pycolab',
     packages=find_packages(),
-    install_requires=['pycolab', 'gym'],
-    dependency_links=[
-        'git+ssh://git@github.com/fomorians/gym_pycolab.git#egg=gym_pycolab'])
+    install_requires=['pycolab', 'gym'])
