@@ -64,7 +64,7 @@ Includes most of the pycolab example games (with `gym.make(game)` or `gym_pycola
 Rendering the `ExtraterrestrialMarauders-v0` with random actions:
 
 ```sh
-python -m gym_pycolab.pycolab_games --game extraterrestrial_marauders
+$ python -m gym_pycolab.pycolab_games --game extraterrestrial_marauders
 ```
 
 # Development
@@ -72,6 +72,6 @@ python -m gym_pycolab.pycolab_games --game extraterrestrial_marauders
 Development is started with `pipenv`.
 
 ```sh
-pipenv install
-pipenv shell
+$ pipenv install
+$ pipenv shell
 ```

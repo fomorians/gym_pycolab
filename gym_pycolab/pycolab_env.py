@@ -19,9 +19,10 @@ class PyColabEnv(gym.Env):
                  game_factory, 
                  max_iterations, 
                  default_reward,
-                 num_actions=4,
+                 action_space=None,
                  delay=30,
-                 resize_scale=8):
+                 resize_scale=8,
+                 colors=None):
         """Create an `PyColabEnv` adapter to a `pycolab` game as a `gym.Env`.
 
         You can access the `pycolab.Engine` instance with `env.current_game`.
@@ -31,32 +32,29 @@ class PyColabEnv(gym.Env):
             max_iterations: maximum number of steps.
             default_reward: default reward if reward is None returned by the
                 `pycolab` game.
-            num_actions: number of possible actions
+            action_space: the action `Space` of the environment.
             delay: renderer delay.
             resize_scale: number of pixels per observation pixel.
         """
         self._game_factory = game_factory
         self._max_iterations = max_iterations
         self._default_reward = default_reward
+        self._colors = colors
 
         test_game = self._game_factory()
         observations, _, _ = test_game.its_showtime()
-        layers = sorted(list(observations.layers.keys()))
-        self._value_mapping = {k: v for v, k in enumerate(layers)}
+        layers = list(observations.layers.keys())
+        not_ordered = list(set(layers) - set(test_game.z_order))
+        self._observation_order = list(reversed(not_ordered + test_game.z_order))
+        
+        self._game_shape = list(observations.board.shape) + [len(layers)]
+        self.observation_space = spaces.Box(
+            low=np.zeros(self._game_shape, np.float32), 
+            high=np.ones(self._game_shape, np.float32), 
+            dtype=np.float32)
+        self.action_space = action_space
 
-        game_shape = observations.board.shape
-        low = np.zeros(game_shape, np.uint32)
-        high = np.full(
-            game_shape, 
-            max(list(self._value_mapping.values())), 
-            np.uint32)
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.uint32)
-
-        # TODO(wenkesj): handle action space better. 
-        # There are some constructs that are multi-agent (list/dict, etc.)
-        self.action_space = spaces.Discrete(num_actions)
-
-        self.current_game = None   
+        self.current_game = None
 
         self._last_observations = None
         self._empty_board = None
@@ -70,17 +68,27 @@ class PyColabEnv(gym.Env):
 
     def get_states(self, observations):
         """Transform the pycolab `rendering.Observations` to a state."""
-        # TODO(wenkesj): there might be a better way, 
-        # this current function decreases fps by ~2x (compared to below).
-        # 
-        # This is the optimal scenario, so maybe there is a way to map values 
-        #   ahead of time?
-        # >>> return observations.board
+        return np.stack([
+            np.asarray(observations.layers[layer_key], np.float32) 
+            for layer_key in self._observation_order], axis=-1)
 
-        board = np.zeros_like(observations.board).astype(np.uint32)
-        for value, layer in observations.layers.items():
-            board_mask = np.array(layer, np.uint32) * self._value_mapping[value]
-            board += board_mask
+    def paint_board(self, observations):
+        board = np.zeros(list(observations.board.shape) + [3], np.uint32)
+        board_mask = np.zeros(list(observations.board.shape) + [3], np.bool)
+
+        for key in self._observation_order:
+            color = self._colors.get(key, (0, 0, 0))
+            color = np.reshape(color, [1, 1, -1]).astype(np.uint32)
+
+            # Broadcast the layer to [H, W, C].
+            board_layer_mask = np.array(observations.layers[key])[..., None]
+            board_layer_mask = np.repeat(board_layer_mask, 3, axis=-1)
+
+            # Update the board with the new layer.
+            board = np.where(np.logical_not(board_mask), board_layer_mask * color, board)
+
+            # Update the mask.
+            board_mask = np.logical_or(board_layer_mask, board_mask)
         return board
 
     def _update_for_game_step(self, observations, reward):
@@ -133,14 +141,18 @@ class PyColabEnv(gym.Env):
         # TODO(wenkesj): handle pycolab colors.
         if self._last_observations:
             img = self._last_observations.board
+            if self._colors:
+                img = self.paint_board(self._last_observations)
             img = np.repeat(np.repeat(
                 img, self.resize_scale, axis=0), self.resize_scale, axis=1)
-            img = np.repeat(img[..., None], 3, axis=-1)
+            if len(img.shape) != 3:
+                img = np.repeat(img[..., None], 3, axis=-1)
         else:
             img = self._empty_board
             img = np.repeat(np.repeat(
                 img, self.resize_scale, axis=0), self.resize_scale, axis=1)
-            img = np.repeat(img[..., None], 3, axis=-1)
+            if len(img.shape) != 3:
+                img = np.repeat(img[..., None], 3, axis=-1)
         img = img.astype(np.uint8)
 
         if mode == 'rgb_array':

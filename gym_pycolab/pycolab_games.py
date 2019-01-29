@@ -5,6 +5,8 @@ from __future__ import print_function
 
 import numpy as np
 
+from gym import spaces
+
 from pycolab.examples import aperture
 from pycolab.examples import apprehend
 from pycolab.examples import better_scrolly_maze
@@ -34,7 +36,7 @@ class OrdealEnv(pycolab_env.PyColabEnv):
             game_factory=ordeal.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=3 + 1,
+            action_space=spaces.Discrete(3 + 1),
             resize_scale=8)
 
 
@@ -53,7 +55,7 @@ class WarehouseManagerEnv(pycolab_env.PyColabEnv):
             game_factory=lambda: warehouse_manager.make_game(level), 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=4 + 1,
+            action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
 
 
@@ -71,7 +73,7 @@ class FluvialNatationEnv(pycolab_env.PyColabEnv):
             game_factory=fluvial_natation.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=2 + 1,
+            action_space=spaces.Discrete(2 + 1),
             resize_scale=8)
 
 
@@ -89,7 +91,7 @@ class ChainWalkEnv(pycolab_env.PyColabEnv):
             game_factory=chain_walk.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=2 + 1,
+            action_space=spaces.Discrete(2 + 1),
             resize_scale=8)
 
 
@@ -107,7 +109,7 @@ class CliffWalkEnv(pycolab_env.PyColabEnv):
             game_factory=cliff_walk.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=4 + 1,
+            action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
 
 
@@ -125,7 +127,7 @@ class FourRoomsEnv(pycolab_env.PyColabEnv):
             game_factory=four_rooms.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=4 + 1,
+            action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
 
 
@@ -143,7 +145,7 @@ class ExtraterrestrialMaraudersEnv(pycolab_env.PyColabEnv):
             game_factory=extraterrestrial_marauders.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=3 + 1,
+            action_space=spaces.Discrete(3 + 1),
             resize_scale=8)
 
 
@@ -162,7 +164,7 @@ class ShockWaveEnv(pycolab_env.PyColabEnv):
             game_factory=lambda: shockwave.make_game(level), 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=3 + 1,
+            action_space=spaces.Discrete(3 + 1),
             resize_scale=8)
 
 
@@ -181,7 +183,7 @@ class ApertureEnv(pycolab_env.PyColabEnv):
             game_factory=lambda: aperture.make_game(level), 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=8 + 1,
+            action_space=spaces.Discrete(8 + 1),
             resize_scale=16)
 
 
@@ -199,7 +201,7 @@ class ApprehendEnv(pycolab_env.PyColabEnv):
             game_factory=apprehend.make_game, 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=2 + 1,
+            action_space=spaces.Discrete(2 + 1),
             resize_scale=8)
 
 
@@ -218,7 +220,7 @@ class BetterScrollyMazeEnv(pycolab_env.PyColabEnv):
             game_factory=lambda: better_scrolly_maze.make_game(level), 
             max_iterations=max_steps, 
             default_reward=default_reward,
-            num_actions=4 + 1,
+            action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
 
 
