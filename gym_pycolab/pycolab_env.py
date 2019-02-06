@@ -5,6 +5,7 @@ from __future__ import print_function
 import time
 import gym
 from gym import spaces
+from gym import logger
 import numpy as np
 
 
@@ -102,25 +103,26 @@ class PyColabEnv(gym.Env):
         if self.current_game.the_plot.frame >= self._max_iterations:
             self._game_over = True
 
-    def _reset_game(self):
-        """Clear all the internal information about the game."""
-        self.current_game = None
-        self._game_over = None
-        self._last_observations = None
-        self._last_reward = None
-
     def reset(self):
         """Start a new episode."""
         self.current_game = self._game_factory()
+        self._game_over = None
+        self._last_observations = None
+        self._last_reward = None
         observations, reward, _ = self.current_game.its_showtime()
         self._update_for_game_step(observations, reward)
         return self._last_state
 
     def step(self, action):
         """Apply action, step the world forward, and return observations."""
+        info = {}
+
         if self.current_game is None:
-            raise RuntimeError(
-                "Episode has already ended, call `reset` instead..")
+            logger.warn("Episode has already ended, call `reset` instead..")
+            state = self._last_state
+            reward = self._last_reward
+            done = self._game_over
+            return state, reward, done, info
 
         # Execute the action in pycolab.
         observations, reward, _ = self.current_game.play(action)
@@ -130,10 +132,9 @@ class PyColabEnv(gym.Env):
         state = self._last_state
         reward = self._last_reward
         done = self._game_over
-        info = {}
 
         if self._game_over:
-            self._reset_game()
+            self.current_game = None
         return state, reward, done, info
 
     def render(self, mode='human'):
