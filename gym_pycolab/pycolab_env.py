@@ -42,12 +42,15 @@ class PyColabEnv(gym.Env):
         self._default_reward = default_reward
         self._colors = colors
 
+        # TODO(wenkesj) assert this order is correct.
         test_game = self._game_factory()
         observations, _, _ = test_game.its_showtime()
         layers = list(observations.layers.keys())
         not_ordered = list(set(layers) - set(test_game.z_order))
-        self._observation_order = list(reversed(not_ordered + test_game.z_order))
-        
+
+        self._render_order = list(reversed(not_ordered + test_game.z_order))
+        self._observation_order = sorted(layers)
+
         self._game_shape = list(observations.board.shape) + [len(layers)]
         self.observation_space = spaces.Box(
             low=np.zeros(self._game_shape, np.float32), 
@@ -77,7 +80,7 @@ class PyColabEnv(gym.Env):
         board = np.zeros(list(observations.board.shape) + [3], np.uint32)
         board_mask = np.zeros(list(observations.board.shape) + [3], np.bool)
 
-        for key in self._observation_order:
+        for key in self._render_order:
             color = self._colors.get(key, (0, 0, 0))
             color = np.reshape(color, [1, 1, -1]).astype(np.uint32)
 
