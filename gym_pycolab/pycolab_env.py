@@ -6,6 +6,7 @@ import time
 import gym
 from gym import spaces
 from gym import logger
+from gym.utils import seeding
 import numpy as np
 
 
@@ -41,8 +42,8 @@ class PyColabEnv(gym.Env):
         self._max_iterations = max_iterations
         self._default_reward = default_reward
         self._colors = colors
+        self.np_random = None
 
-        # TODO(wenkesj) assert this order is correct.
         test_game = self._game_factory()
         observations, _, _ = test_game.its_showtime()
         layers = list(observations.layers.keys())
@@ -169,6 +170,10 @@ class PyColabEnv(gym.Env):
             self.viewer.imshow(img)
             time.sleep(self.delay / 1e3)
             return self.viewer.isopen
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
 
     def close(self):
         if self.viewer:
