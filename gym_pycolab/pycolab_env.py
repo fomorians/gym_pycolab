@@ -45,6 +45,7 @@ class PyColabEnv(gym.Env):
         self.np_random = None
 
         test_game = self._game_factory()
+        setattr(test_game.the_plot, 'info', {})
         observations, _, _ = test_game.its_showtime()
         layers = list(observations.layers.keys())
         not_ordered = list(set(layers) - set(test_game.z_order))
@@ -110,6 +111,7 @@ class PyColabEnv(gym.Env):
     def reset(self):
         """Start a new episode."""
         self.current_game = self._game_factory()
+        setattr(self.current_game.the_plot, 'info', {})
         self._game_over = None
         self._last_observations = None
         self._last_reward = None
@@ -119,18 +121,18 @@ class PyColabEnv(gym.Env):
 
     def step(self, action):
         """Apply action, step the world forward, and return observations."""
-        info = {}
-
         if self.current_game is None:
             logger.warn("Episode has already ended, call `reset` instead..")
             state = self._last_state
             reward = self._last_reward
             done = self._game_over
-            return state, reward, done, info
+            return state, reward, done, {}
 
         # Execute the action in pycolab.
+        setattr(self.current_game.the_plot, 'info', {})
         observations, reward, _ = self.current_game.play(action)
         self._update_for_game_step(observations, reward)
+        info = getattr(self.current_game.the_plot, 'info', {})
 
         # Check the current status of the game.
         state = self._last_state
@@ -143,7 +145,6 @@ class PyColabEnv(gym.Env):
 
     def render(self, mode='human'):
         """Render the board to the gym viewer."""
-        # TODO(wenkesj): handle pycolab colors.
         if self._last_observations:
             img = self._last_observations.board
             if self._colors:
