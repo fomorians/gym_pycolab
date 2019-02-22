@@ -59,7 +59,7 @@ class PyColabEnv(gym.Env):
             channels = [len(layers)]
             channel_max = 1.
         elif self._observation_type == 'labels':
-            channels = [1]
+            channels = []
             channel_max = 1.
         elif self._observation_type == 'rgb':
             assert self._colors is not None, ''
