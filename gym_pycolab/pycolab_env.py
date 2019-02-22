@@ -103,7 +103,7 @@ class PyColabEnv(gym.Env):
                 board_mask = np.logical_or(board_layer_mask, board_mask)
             return board.astype(np.float32)
         elif self._observation_type == 'rgb':
-            return self.paint_image(observations.layers)
+            return self.paint_image(observations.layers, resize=False)
 
     def _paint_board(self, layers):
         board_shape = self._last_observations.board.shape
@@ -125,15 +125,16 @@ class PyColabEnv(gym.Env):
             board_mask = np.logical_or(board_layer_mask, board_mask)
         return board
 
-    def paint_image(self, layers, board=None):
+    def paint_image(self, layers, board=None, resize=True):
         """Paint the layers into the board and return an RGB array."""
         if self._colors:
             img = self._paint_board(layers)
         else:
             assert board is not None, '`board` must not be `None` if there are no colors.'
             img = board
-        img = np.repeat(np.repeat(
-            img, self.resize_scale, axis=0), self.resize_scale, axis=1)
+        if resize:
+            img = np.repeat(np.repeat(
+                img, self.resize_scale, axis=0), self.resize_scale, axis=1)
         if len(img.shape) != 3:
             img = np.repeat(img[..., None], 3, axis=-1)
         img = img.astype(np.uint8)
