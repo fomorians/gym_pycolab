@@ -39,6 +39,7 @@ class PyColabEnv(gym.Env):
             delay: renderer delay.
             resize_scale: number of pixels per observation pixel.
         """
+        assert observation_type in ['layers', 'labels', 'rgb']
         self._game_factory = game_factory
         self._max_iterations = max_iterations
         self._default_reward = default_reward
@@ -90,7 +91,7 @@ class PyColabEnv(gym.Env):
     def get_states(self, observations):
         """Transform the pycolab `rendering.Observations` to a state."""
         # TODO(wenkesj) cache this control flow.
-        if self._observation_type == 'layered':
+        if self._observation_type == 'layers':
             return np.stack([
                 np.asarray(observations.layers[layer_key], np.float32) 
                 for layer_key in self._observation_order], axis=-1)
