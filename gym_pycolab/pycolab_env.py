@@ -1,12 +1,17 @@
+"""The pycolab environment interface."""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
 import time
+import numbers
 import gym
 from gym import spaces
 from gym import logger
 from gym.utils import seeding
+from gym.envs.classic_control.rendering import SimpleImageViewer
+
 import numpy as np
 
 
@@ -37,9 +42,29 @@ class PyColabEnv(gym.Env):
                 `pycolab` game.
             action_space: the action `Space` of the environment.
             delay: renderer delay.
-            resize_scale: number of pixels per observation pixel.
+            resize_scale: number of pixels per observation pixel. 
+                Used only by the renderer.
+            colors: optional dictionary mapping tile name to `tuple(R, G, B)`.
+            observation_type: type of observations to return.
+                - layers: the 3D board where each cell corresponds to a class 
+                    represented by the objects in the game. If the object exists 
+                    in the cell, the value will be 1, otherwise 0. If the game 
+                    occludes layers, the rendering order is ignored and multiple
+                    objects can be represented by 1. For example, Bridge = 1, 
+                    Water = 2 -> [[[0, 1, 1], ...]], the Bridge and Water are 
+                    represented.
+                - labels: the 2D board where each cell corresponds to a class 
+                    represented by the objects in the game. Only one object 
+                    class is represented, following the rendering order of the 
+                    game. For example, Bridge = 1, Water = 2 -> [[1, ...]],
+                    the Bridge is represented instead of the Water.
+                - rgb: the 3D board where each cell corresponds to the rendered
+                    object's RGB color provided by the `colors` argument.
         """
         assert observation_type in ['layers', 'labels', 'rgb']
+        assert max_iterations > 0
+        assert isinstance(default_reward, numbers.Number)
+
         self._game_factory = game_factory
         self._max_iterations = max_iterations
         self._default_reward = default_reward
@@ -59,15 +84,16 @@ class PyColabEnv(gym.Env):
         if self._observation_type == 'layers':
             channels = [len(layers)]
             channel_max = 1.
+            self.get_states = self._get_states_layers
         elif self._observation_type == 'labels':
             channels = []
             channel_max = 1.
+            self.get_states = self._get_states_labels
         elif self._observation_type == 'rgb':
             assert self._colors is not None, ''
             channels = [3]
             channel_max = 255.
-        else:
-            raise NotImplementedError(self._observation_type)
+            self.get_states = self._get_states_rgb
 
         self._game_shape = list(observations.board.shape) + channels
         self.observation_space = spaces.Box(
@@ -88,25 +114,28 @@ class PyColabEnv(gym.Env):
         self.resize_scale = resize_scale
         self.delay = delay
 
-    def get_states(self, observations):
-        """Transform the pycolab `rendering.Observations` to a state."""
-        # TODO(wenkesj) cache this control flow.
-        if self._observation_type == 'layers':
-            return np.stack([
-                np.asarray(observations.layers[layer_key], np.float32) 
-                for layer_key in self._observation_order], axis=-1)
-        elif self._observation_type == 'labels':
-            board = np.zeros(self._game_shape, np.int32)
-            board_mask = np.zeros(self._game_shape, np.int32)
-            for key in self._render_order:
-                board_layer_mask = np.array(observations.layers[key]) * self._observation_order.index(key)
-                board = np.where(np.logical_not(board_mask), board_layer_mask, board)
-                board_mask = np.logical_or(board_layer_mask, board_mask)
-            return board.astype(np.float32)
-        elif self._observation_type == 'rgb':
-            return self.paint_image(observations.layers, resize=False)
+    def _get_states_layers(self, observations):
+        """Transform the pycolab `rendering.Observations` to a state by layers."""
+        return np.stack([
+            np.asarray(observations.layers[layer_key], np.float32) 
+            for layer_key in self._observation_order], axis=-1)
+
+    def _get_states_labels(self, observations):
+        """Transform the pycolab `rendering.Observations` to a state by label."""
+        board = np.zeros(self._game_shape, np.int32)
+        board_mask = np.zeros(self._game_shape, np.int32)
+        for key in self._render_order:
+            board_layer_mask = np.array(observations.layers[key]) * self._observation_order.index(key)
+            board = np.where(np.logical_not(board_mask), board_layer_mask, board)
+            board_mask = np.logical_or(board_layer_mask, board_mask)
+        return board.astype(np.float32)
+
+    def _get_states_rgb(self, observations):
+        """Transform the pycolab `rendering.Observations` to a state in RGB."""
+        return self.paint_image(observations.layers, resize=False)
 
     def _paint_board(self, layers):
+        """Method to privately paint layers to RGB."""
         board_shape = self._last_observations.board.shape
         board = np.zeros(list(board_shape) + [3], np.uint32)
         board_mask = np.zeros(list(board_shape) + [3], np.bool)
@@ -213,7 +242,6 @@ class PyColabEnv(gym.Env):
             return img
 
         elif mode == 'human':
-            from gym.envs.classic_control.rendering import SimpleImageViewer
             if self.viewer is None:
                 self.viewer = SimpleImageViewer()
             self.viewer.imshow(img)
@@ -221,10 +249,12 @@ class PyColabEnv(gym.Env):
             return self.viewer.isopen
 
     def seed(self, seed=None):
+        """Seeds the environment."""
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
     def close(self):
+        """Sets up the renderer."""
         if self.viewer:
             self.viewer.close()
             self.viewer = None

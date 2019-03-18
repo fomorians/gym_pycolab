@@ -1,4 +1,5 @@
-"""An example implementation of the pycolab games."""
+"""An example implementation of pycolab games as environments."""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function

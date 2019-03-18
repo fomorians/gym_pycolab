@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pycolab = "*"
 gym = "*"
+absl-py = "*"
 
 [dev-packages]
 pylint = "<2.0.0"
