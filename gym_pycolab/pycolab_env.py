@@ -10,7 +10,6 @@ import gym
 from gym import spaces
 from gym import logger
 from gym.utils import seeding
-from gym.envs.classic_control.rendering import SimpleImageViewer
 
 import numpy as np
 
@@ -30,7 +29,9 @@ class PyColabEnv(gym.Env):
                  delay=30,
                  resize_scale=8,
                  colors=None,
-                 observation_type='layers'):
+                 observation_type='layers',
+                 exclude_from_state=None,
+                 merge_layer_groups=None):
         """Create an `PyColabEnv` adapter to a `pycolab` game as a `gym.Env`.
 
         You can access the `pycolab.Engine` instance with `env.current_game`.
@@ -58,10 +59,10 @@ class PyColabEnv(gym.Env):
                     class is represented, following the rendering order of the 
                     game. For example, Bridge = 1, Water = 2 -> [[1, ...]],
                     the Bridge is represented instead of the Water.
-                - rgb: the 3D board where each cell corresponds to the rendered
-                    object's RGB color provided by the `colors` argument.
+            exclude_from_state: set to exclude from the observations to states.
+            merge_layer_groups: merge layers for these group of observations keys.
         """
-        assert observation_type in ['layers', 'labels', 'rgb']
+        assert observation_type in ['layers', 'labels']
         assert max_iterations > 0
         assert isinstance(default_reward, numbers.Number)
 
@@ -78,22 +79,31 @@ class PyColabEnv(gym.Env):
         not_ordered = list(set(layers) - set(test_game.z_order))
 
         self._render_order = list(reversed(not_ordered + test_game.z_order))
-        self._observation_order = sorted(layers)
-        self._observation_type = observation_type        
+
+        if exclude_from_state is None:
+            exclude_from_state = []
+        self._exclude_from_state = set(exclude_from_state)
+
+        if merge_layer_groups is None:
+            merge_layer_groups = [set([])]
+        self._merge_layer_groups = merge_layer_groups
+
+        observation_layers = list(set(layers) - self._exclude_from_state)
+        self._observation_order = sorted(observation_layers)
+        self._observation_type = observation_type
 
         if self._observation_type == 'layers':
-            channels = [len(layers)]
+            merge_size_reduction = 0
+            for group in self._merge_layer_groups:
+                if group:
+                    merge_size_reduction += len(group) - 1
+            channels = [len(observation_layers) - merge_size_reduction]
             channel_max = 1.
             self.get_states = self._get_states_layers
         elif self._observation_type == 'labels':
             channels = []
             channel_max = 1.
             self.get_states = self._get_states_labels
-        elif self._observation_type == 'rgb':
-            assert self._colors is not None, ''
-            channels = [3]
-            channel_max = 255.
-            self.get_states = self._get_states_rgb
 
         self._game_shape = list(observations.board.shape) + channels
         self.observation_space = spaces.Box(
@@ -116,31 +126,54 @@ class PyColabEnv(gym.Env):
 
     def _get_states_layers(self, observations):
         """Transform the pycolab `rendering.Observations` to a state by layers."""
-        return np.stack([
+        layered_observations = np.stack([
             np.asarray(observations.layers[layer_key], np.float32) 
             for layer_key in self._observation_order], axis=-1)
+
+        if self._merge_layer_groups[0]:
+            for group_set in self._merge_layer_groups:
+                group = list(group_set)
+                group_layers = []
+                group_remove_indices = []
+
+                leader_key = group[0]
+                leader_layer_idx = self._observation_order.index(leader_key)
+                leader_layer = layered_observations[..., leader_layer_idx]
+                group_layers.append(leader_layer)
+                
+                for key in group[1:]:
+                    layer_idx = self._observation_order.index(key)
+                    group_remove_indices.append(layer_idx)
+                    layer = layered_observations[..., layer_idx]
+                    group_layers.append(layer)
+
+                # remove layers that are merged.
+                layered_observations[..., leader_layer_idx] = np.logical_or.reduce(group_layers)
+                layered_observations = np.delete(layered_observations, group_remove_indices, -1)
+        return layered_observations
 
     def _get_states_labels(self, observations):
         """Transform the pycolab `rendering.Observations` to a state by label."""
         board = np.zeros(self._game_shape, np.int32)
         board_mask = np.zeros(self._game_shape, np.int32)
         for key in self._render_order:
+            if key in self._exclude_from_state:
+                continue
+            # TODO(wenkesj):
             board_layer_mask = np.array(observations.layers[key]) * self._observation_order.index(key)
             board = np.where(np.logical_not(board_mask), board_layer_mask, board)
             board_mask = np.logical_or(board_layer_mask, board_mask)
         return board.astype(np.float32)
 
-    def _get_states_rgb(self, observations):
-        """Transform the pycolab `rendering.Observations` to a state in RGB."""
-        return self.paint_image(observations.layers, resize=False)
-
-    def _paint_board(self, layers):
+    def _paint_board(self, layers, exclude=False):
         """Method to privately paint layers to RGB."""
         board_shape = self._last_observations.board.shape
         board = np.zeros(list(board_shape) + [3], np.uint32)
         board_mask = np.zeros(list(board_shape) + [3], np.bool)
 
         for key in self._render_order:
+            if exclude and (key in self._exclude_from_state):
+                continue
             color = self._colors.get(key, (0, 0, 0))
             color = np.reshape(color, [1, 1, -1]).astype(np.uint32)
 
@@ -155,10 +188,10 @@ class PyColabEnv(gym.Env):
             board_mask = np.logical_or(board_layer_mask, board_mask)
         return board
 
-    def paint_image(self, layers, board=None, resize=True):
+    def paint_image(self, layers, board=None, resize=True, exclude=False):
         """Paint the layers into the board and return an RGB array."""
         if self._colors:
-            img = self._paint_board(layers)
+            img = self._paint_board(layers, exclude=exclude)
         else:
             assert board is not None, '`board` must not be `None` if there are no colors.'
             img = board
@@ -243,6 +276,7 @@ class PyColabEnv(gym.Env):
 
         elif mode == 'human':
             if self.viewer is None:
+                from gym.envs.classic_control.rendering import SimpleImageViewer
                 self.viewer = SimpleImageViewer()
             self.viewer.imshow(img)
             time.sleep(self.delay / 1e3)
