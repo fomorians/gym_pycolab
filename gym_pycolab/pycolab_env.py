@@ -45,7 +45,9 @@ class PyColabEnv(gym.Env):
             delay: renderer delay.
             resize_scale: number of pixels per observation pixel. 
                 Used only by the renderer.
-            colors: optional dictionary mapping tile name to `tuple(R, G, B)`.
+            colors: optional dictionary mapping key name to `tuple(R, G, B)` 
+                or a callable that returns a dictionary mapping key name to 
+                `tuple(R, G, B)`.
             observation_type: type of observations to return.
                 - layers: the 3D board where each cell corresponds to a class 
                     represented by the objects in the game. If the object exists 
@@ -59,17 +61,23 @@ class PyColabEnv(gym.Env):
                     class is represented, following the rendering order of the 
                     game. For example, Bridge = 1, Water = 2 -> [[1, ...]],
                     the Bridge is represented instead of the Water.
+                - rgb: TODO(wenkesj): docstring.
             exclude_from_state: set to exclude from the observations to states.
             merge_layer_groups: merge layers for these group of observations keys.
         """
-        assert observation_type in ['layers', 'labels']
+        assert observation_type in ['layers', 'labels', 'rgb']
         assert max_iterations > 0
         assert isinstance(default_reward, numbers.Number)
 
         self._game_factory = game_factory
         self._max_iterations = max_iterations
         self._default_reward = default_reward
-        self._colors = colors
+        if callable(colors):
+            self._colors = None
+            self._colors_factory = colors
+        else:
+            self._colors = colors
+            self._colors_factory = None
         self.np_random = None
 
         test_game = self._game_factory()
@@ -99,15 +107,23 @@ class PyColabEnv(gym.Env):
                     merge_size_reduction += len(group) - 1
             channels = [len(observation_layers) - merge_size_reduction]
             channel_max = 1.
+            channel_min = 0.
             self.get_states = self._get_states_layers
         elif self._observation_type == 'labels':
+            # TODO(wenkesj): implement merge_layer_groups
             channels = []
             channel_max = 1.
+            channel_min = 0.
             self.get_states = self._get_states_labels
+        elif self._observation_type == 'rgb':
+            channels = [3]
+            channel_max = 255.
+            channel_min = 0.
+            self.get_states = self._get_states_rgb
 
         self._game_shape = list(observations.board.shape) + channels
         self.observation_space = spaces.Box(
-            low=np.zeros(self._game_shape, np.float32), 
+            low=np.ones(self._game_shape, np.float32) * channel_min, 
             high=np.ones(self._game_shape, np.float32) * channel_max, 
             dtype=np.float32)
         self.action_space = action_space
@@ -130,6 +146,8 @@ class PyColabEnv(gym.Env):
             np.asarray(observations.layers[layer_key], np.float32) 
             for layer_key in self._observation_order], axis=-1)
 
+        # TODO(wenkesj): is there a faster/better way to do this?
+        #   We can probably precompute this and change the observation_order.
         if self._merge_layer_groups[0]:
             for group_set in self._merge_layer_groups:
                 group = list(group_set)
@@ -152,18 +170,25 @@ class PyColabEnv(gym.Env):
                 layered_observations = np.delete(layered_observations, group_remove_indices, -1)
         return layered_observations
 
+    # TODO(wenkesj): implement merge_layer_groups for labels.
     def _get_states_labels(self, observations):
         """Transform the pycolab `rendering.Observations` to a state by label."""
         board = np.zeros(self._game_shape, np.int32)
         board_mask = np.zeros(self._game_shape, np.int32)
+
         for key in self._render_order:
-            if key in self._exclude_from_state:
+            if (key in self._exclude_from_state):
                 continue
-            # TODO(wenkesj):
             board_layer_mask = np.array(observations.layers[key]) * self._observation_order.index(key)
             board = np.where(np.logical_not(board_mask), board_layer_mask, board)
             board_mask = np.logical_or(board_layer_mask, board_mask)
         return board.astype(np.float32)
+
+    def _get_states_rgb(self, observations):
+        """Transform the pycolab `rendering.Observations` to a state by rgb."""
+        board = self._paint_board(
+            observations.layers, exclude=True).astype(np.float32)
+        return board
 
     def _paint_board(self, layers, exclude=False):
         """Method to privately paint layers to RGB."""
@@ -174,6 +199,7 @@ class PyColabEnv(gym.Env):
         for key in self._render_order:
             if exclude and (key in self._exclude_from_state):
                 continue
+
             color = self._colors.get(key, (0, 0, 0))
             color = np.reshape(color, [1, 1, -1]).astype(np.uint32)
 
@@ -225,6 +251,8 @@ class PyColabEnv(gym.Env):
     def reset(self):
         """Start a new episode."""
         self.current_game = self._game_factory()
+        if self._colors_factory:
+            self._colors = self._colors_factory()
         setattr(self.current_game.the_plot, 'info', {})
         self._game_over = None
         self._last_observations = None
