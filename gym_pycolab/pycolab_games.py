@@ -30,11 +30,11 @@ class OrdealEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/ordeal.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(OrdealEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(3 + 1),
             resize_scale=8)
@@ -50,13 +50,13 @@ class WarehouseManagerEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/warehouse_manager.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  level=0,
                  max_iterations=10,
                  default_reward=-1.):
         self.level = level
         super(WarehouseManagerEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
@@ -72,11 +72,11 @@ class FluvialNatationEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/fluvial_natation.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(FluvialNatationEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(2 + 1),
             resize_scale=8)
@@ -92,11 +92,11 @@ class ChainWalkEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/classics/chain_walk.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(ChainWalkEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(2 + 1),
             resize_scale=8)
@@ -112,11 +112,11 @@ class CliffWalkEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/classics/cliff_walk.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(CliffWalkEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
@@ -132,11 +132,11 @@ class FourRoomsEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/classics/four_rooms.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(FourRoomsEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
@@ -152,11 +152,11 @@ class ExtraterrestrialMaraudersEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/extraterrestrial_marauders.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(ExtraterrestrialMaraudersEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(3 + 1),
             resize_scale=8)
@@ -172,13 +172,13 @@ class ShockWaveEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/shockwave.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  level=0,
                  max_iterations=10,
                  default_reward=-1.):
         self.level = level
         super(ShockWaveEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(3 + 1),
             resize_scale=8)
@@ -194,13 +194,13 @@ class ApertureEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/aperture.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  level=0,
                  max_iterations=10,
                  default_reward=-1.):
         self.level = level
         super(ApertureEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(8 + 1),
             resize_scale=16)
@@ -216,11 +216,11 @@ class ApprehendEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/apprehend.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(ApprehendEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(2 + 1),
             resize_scale=8)
@@ -236,13 +236,13 @@ class BetterScrollyMazeEnv(pycolab_env.PyColabEnv):
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/better_scrolly_maze.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  level=0,
                  max_iterations=10,
                  default_reward=-1.):
         self.level = level
         super(BetterScrollyMazeEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
@@ -257,10 +257,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--game', 
+        '--game',
         choices=[
-            'chain_walk', 
-            'cliff_walk', 
+            'chain_walk',
+            'cliff_walk',
             'four_rooms',
             'extraterrestrial_marauders',
             'shockwave',
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             'better_scrolly_maze',
             'ordeal',
             'fluvial_natation',
-            'warehouse_manager'], 
+            'warehouse_manager'],
         required=True)
     parser.add_argument('--benchmark', action='store_true')
     args = parser.parse_args()
@@ -316,8 +316,8 @@ if __name__ == "__main__":
         average_eps_time = total_eps_time / num_eps
         average_fps = total_fps / num_eps
         print('total eps: {}ms, avg. eps: {}ms, avg. fps: {}fps'.format(
-            total_eps_time * 1e3, 
-            average_eps_time * 1e3, 
+            total_eps_time * 1e3,
+            average_eps_time * 1e3,
             average_fps))
     else:
         state = env.reset()

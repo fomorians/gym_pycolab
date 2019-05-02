@@ -16,18 +16,18 @@ from pycolab.examples.classics import four_rooms
 from gym_pycolab import pycolab_env
 
 
-class FourRoomsEnv(pycolab_env.PyColabEnv):
-    """Classic four rooms game.
+class CustomColorsFourRoomsEnv(pycolab_env.PyColabEnv):
+    """Classic four rooms game, with custom colors.
 
     Reference:
         https://github.com/deepmind/pycolab/blob/master/pycolab/examples/classics/four_rooms.py
     """
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
-        super(FourRoomsEnv, self).__init__(
-            max_iterations=max_iterations, 
+        super(CustomColorsFourRoomsEnv, self).__init__(
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(4 + 1),
             resize_scale=8)
@@ -37,8 +37,8 @@ class FourRoomsEnv(pycolab_env.PyColabEnv):
 
     def make_colors(self):
         return {
-            'P': (0, 0, 255), 
-            ' ': (255, 0, 0), 
+            'P': (0, 0, 255),
+            ' ': (255, 0, 0),
             '#': (0, 255, 0),
         }
 
@@ -49,34 +49,34 @@ class PyColabEnvTest(parameterized.TestCase):
         super(PyColabEnvTest, self).setUp()
         self._max_iterations = 10
         self._default_reward = 0
-  
+
     def testBadMaxIterationsConstructor(self):
         with self.assertRaises(AssertionError):
-            _ = FourRoomsEnv(
+            _ = CustomColorsFourRoomsEnv(
                 max_iterations=-1,
                 default_reward=self._default_reward)
 
     def testBadDefaultRewardConstructor(self):
         with self.assertRaises(AssertionError):
-            _ = FourRoomsEnv(
+            _ = CustomColorsFourRoomsEnv(
                 max_iterations=self._max_iterations,
                 default_reward=None)
 
     @parameterized.parameters(
         ((13, 13, 3),),)
     def testReset(self, shape):
-        env = FourRoomsEnv(
+        env = CustomColorsFourRoomsEnv(
             max_iterations=self._max_iterations,
             default_reward=self._default_reward)
         last_state = env.reset()
         self.assertEqual(shape, last_state.shape)
 
     @parameterized.parameters(
-        (1, (0, 1, 2)), 
-        (2, (0, 1)), 
+        (1, (0, 1, 2)),
+        (2, (0, 1)),
         (10, (0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0)))
     def testMaxIterations(self, max_iterations, actions):
-        env = FourRoomsEnv(
+        env = CustomColorsFourRoomsEnv(
             max_iterations=max_iterations,
             default_reward=self._default_reward)
 
@@ -91,7 +91,7 @@ class PyColabEnvTest(parameterized.TestCase):
         (-1., -3, (0, 1, 2)),
         (0., 1., (0, 0, 0, 0, 3, 3, 0, 0, 0, 2)))
     def testTotalRewards(self, default_reward, expected_total_reward, actions):
-        env = FourRoomsEnv(
+        env = CustomColorsFourRoomsEnv(
             max_iterations=self._max_iterations,
             default_reward=default_reward)
 
