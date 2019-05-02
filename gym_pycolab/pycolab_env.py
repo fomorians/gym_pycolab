@@ -63,8 +63,12 @@ class PyColabEnv(gym.Env):
 
         self._max_iterations = max_iterations
         self._default_reward = default_reward
-        self._colors = self.make_colors()
 
+        # At this point, the game would only want to access the random
+        # property, although it is set to None initially.
+        self.np_random = None
+
+        self._colors = self.make_colors()
         test_game = self.make_game()
         test_game.the_plot.info = {}
         observations, _, _ = test_game.its_showtime()
@@ -95,7 +99,6 @@ class PyColabEnv(gym.Env):
         self.viewer = None
         self.resize_scale = resize_scale
         self.delay = delay
-        self.np_random = None
 
     @abc.abstractmethod
     def make_game(self):
