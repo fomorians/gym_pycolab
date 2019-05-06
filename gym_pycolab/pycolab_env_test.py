@@ -16,80 +16,69 @@ from pycolab.examples.classics import four_rooms
 from gym_pycolab import pycolab_env
 
 
+class CustomColorsFourRoomsEnv(pycolab_env.PyColabEnv):
+    """Classic four rooms game, with custom colors.
+
+    Reference:
+        https://github.com/deepmind/pycolab/blob/master/pycolab/examples/classics/four_rooms.py
+    """
+
+    def __init__(self,
+                 max_iterations=10,
+                 default_reward=-1.):
+        super(CustomColorsFourRoomsEnv, self).__init__(
+            max_iterations=max_iterations,
+            default_reward=default_reward,
+            action_space=spaces.Discrete(4 + 1),
+            resize_scale=8)
+
+    def make_game(self):
+        return four_rooms.make_game()
+
+    def make_colors(self):
+        return {
+            'P': (0, 0, 255),
+            ' ': (255, 0, 0),
+            '#': (0, 255, 0),
+        }
+
+
 class PyColabEnvTest(parameterized.TestCase):
 
     def setUp(self):
         super(PyColabEnvTest, self).setUp()
-        self._game_factory = four_rooms.make_game
-        self._action_space = spaces.Discrete(4 + 1)
         self._max_iterations = 10
         self._default_reward = 0
-        self._resize_scale = 8
-        self._colors = {
-            'P': (0, 0, 255), 
-            ' ': (255, 0, 0), 
-            '#': (0, 255, 0),
-        }
-        self._observation_type = 'layers'
-  
-    def testBadObservationTypeConstructor(self):
-        with self.assertRaises(AssertionError):
-            _ = pycolab_env.PyColabEnv(
-                game_factory=self._game_factory,
-                action_space=self._action_space,
-                max_iterations=self._max_iterations,
-                default_reward=self._default_reward,
-                resize_scale=self._resize_scale,
-                observation_type='bad_observation_type')
 
     def testBadMaxIterationsConstructor(self):
         with self.assertRaises(AssertionError):
-            _ = pycolab_env.PyColabEnv(
-                game_factory=self._game_factory,
-                action_space=self._action_space,
+            _ = CustomColorsFourRoomsEnv(
                 max_iterations=-1,
-                default_reward=self._default_reward,
-                resize_scale=self._resize_scale,
-                observation_type=self._observation_type)
+                default_reward=self._default_reward)
 
     def testBadDefaultRewardConstructor(self):
         with self.assertRaises(AssertionError):
-            _ = pycolab_env.PyColabEnv(
-                game_factory=self._game_factory,
-                action_space=self._action_space,
+            _ = CustomColorsFourRoomsEnv(
                 max_iterations=self._max_iterations,
-                default_reward=None,
-                resize_scale=self._resize_scale,
-                observation_type=self._observation_type)
+                default_reward=None)
 
-    @parameterized.named_parameters(
-        ('Layers', 'layers', (13, 13, 3)),
-        ('Labels', 'labels', (13, 13)),
-        ('RGB', 'rgb', (13, 13, 3)))
-    def testObservationType(self, observation_type, shape):
-        env = pycolab_env.PyColabEnv(
-            game_factory=self._game_factory,
-            action_space=self._action_space,
+    @parameterized.parameters(
+        ((13, 13, 3),),)
+    def testReset(self, shape):
+        env = CustomColorsFourRoomsEnv(
             max_iterations=self._max_iterations,
-            default_reward=self._default_reward,
-            colors=self._colors,
-            resize_scale=self._resize_scale,
-            observation_type=observation_type)
+            default_reward=self._default_reward)
         last_state = env.reset()
         self.assertEqual(shape, last_state.shape)
 
     @parameterized.parameters(
-        (1, (0, 1, 2)), 
-        (2, (0, 1)), 
+        (1, (0, 1, 2)),
+        (2, (0, 1)),
         (10, (0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0)))
     def testMaxIterations(self, max_iterations, actions):
-        env = pycolab_env.PyColabEnv(
-            game_factory=self._game_factory,
-            action_space=self._action_space,
+        env = CustomColorsFourRoomsEnv(
             max_iterations=max_iterations,
-            default_reward=self._default_reward,
-            resize_scale=self._resize_scale,
-            observation_type=self._observation_type)
+            default_reward=self._default_reward)
 
         _ = env.reset()
         for step, action in enumerate(actions):
@@ -102,13 +91,9 @@ class PyColabEnvTest(parameterized.TestCase):
         (-1., -3, (0, 1, 2)),
         (0., 1., (0, 0, 0, 0, 3, 3, 0, 0, 0, 2)))
     def testTotalRewards(self, default_reward, expected_total_reward, actions):
-        env = pycolab_env.PyColabEnv(
-            game_factory=self._game_factory,
-            action_space=self._action_space,
+        env = CustomColorsFourRoomsEnv(
             max_iterations=self._max_iterations,
-            default_reward=default_reward,
-            resize_scale=self._resize_scale,
-            observation_type=self._observation_type)
+            default_reward=default_reward)
 
         _ = env.reset()
         total_reward = 0.
