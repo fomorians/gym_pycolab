@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='gym_pycolab',
-    version='0.0.0',
+    version='1.0.0',
     description='Gym interface for custom pycolab games.',
     url='https://github.com/fomorians/gym_pycolab',
     packages=find_packages(),
