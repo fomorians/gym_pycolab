@@ -12,8 +12,7 @@
 </p>
 
 ```sh
-$ git clone https://github.com/fomorians/gym_pycolab.git
-$ (cd gym_pycolab; pip install -e .)
+$ pip install gym-pycolab
 ```
 
 # API
@@ -29,17 +28,17 @@ from gym import spaces
 class MyGameEnv(gym_pycolab.PyColabEnv):
     """A pycolab game env."""
 
-    def __init__(self, 
+    def __init__(self,
                  max_iterations=10,
                  default_reward=-1.):
         super(MyGameEnv, self).__init__(
-            max_iterations=max_iterations, 
+            max_iterations=max_iterations,
             default_reward=default_reward,
             action_space=spaces.Discrete(4))
 
     def make_game(self):
         return my_game
-    
+
     def make_colors(self):
         return {'#': (0, 0, 255)}
 
