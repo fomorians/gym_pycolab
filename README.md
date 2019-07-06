@@ -1,6 +1,6 @@
 # Gym PyColab
 
-`gym.Env` interface for custom `pycolab` games.
+[`gym`](http://gym.openai.com/docs/) interface for [`pycolab`](https://github.com/deepmind/pycolab) games.
 
 <hr/>
 
